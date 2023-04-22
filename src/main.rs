@@ -1,4 +1,5 @@
 use clap::{Parser, Subcommand};
+use std::fs;
 
 use mkd_reader::ast::{lexer::*, token::*};
 
@@ -25,21 +26,27 @@ fn main() {
     let cli_args = Cli::parse();
 
     match cli_args.command {
-        Some(Commands::Format {  path }) => {
-            println!("Here is the path: {}", path);
+        Some(Commands::Format { path }) => {
+            format_file(path);
         },
         Some(Commands::Inline { content }) => {
-            inline(content);
+            repl(content);
         }
         _ => {}
     }
 }
 
-fn format_file(path: String) {
-    todo!();
+fn format_file(file_path: String) {
+    let file = fs::read_to_string(file_path);
+    match file {
+        Ok(content) => {
+            repl(content);
+        },
+        Err(e) => panic!("{e}")
+    }
 }
 
-fn inline(content: String) {
+fn repl(content: String) {
     let mut l: Lexer = Lexer::new(content);
     let mut token: Token = l.next_token();
     while token.token_type != TokenType::EOF && token.token_type != TokenType::ILLEGAL {

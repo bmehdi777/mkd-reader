@@ -1,13 +1,17 @@
 #[derive(Debug, Clone, PartialEq)]
 pub enum TokenType {
     EOF,
+    EOL,
     ILLEGAL,
 
     TITLE,
     PARAGRAPH,
+    QUOTEDTEXT,
+    QUOTEDCODE,
 
     BOLD,
     ITALIC,
+    BOLDITALIC,
     STRIKETHROUGH,
 }
 

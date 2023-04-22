@@ -45,24 +45,49 @@ impl Lexer {
 
         match self.character {
             b'#' => {
+                let mut title = String::from("#");
                 if self.peek_character() == b'#' {
-                    println!("here");
-                    let mut title = String::from("#");
-                    while self.peek_character() == b'#' {
+                    let mut max: u32 = 1;
+                    while self.peek_character() == b'#' && max < 6 {
                         self.read_character();
                         title.push('#');
+                        max += 1;
                     }
-                    println!("{:}", title);
                     tok = Token::new(TokenType::TITLE, title);
+                } else if self.peek_character() != b' ' {
+                    tok = Token::new(TokenType::PARAGRAPH, title);
                 } else {
-                    tok = Token::new(TokenType::TITLE, String::from("#"));
+                    tok = Token::new(TokenType::TITLE, title);
                 }
             }
-            b'*' | b'_' | b'~' => {
-                if self.peek_character() == self.character {
+            b'*' | b'_'  => {
+                if self.character == b'*' && self.peek_character() == b'*' &&
+                    self.peek_character_at(2) == b'*' {
+                        self.read_character();
+                        self.read_character();
+                        tok = Token::new(TokenType::BOLDITALIC, String::from("***"));
+                    }
+                else if self.peek_character() == self.character {
+                    let old = self.character;
+                    self.read_character();
                     tok = Token::new(
                         TokenType::BOLD,
-                        String::from(format!("{}{}", (self.character as char), (self.peek_character() as char))),
+                        String::from(format!("{}{}", (old as char), (self.character as char))),
+                    );
+                } else {
+                    tok = Token::new(
+                        TokenType::ITALIC,
+                        String::from(format!("{}", (self.character as char))),
+                    );
+                }
+            }
+            b'~' => {
+                if self.peek_character() == self.character {
+                    let old = self.character;
+                    self.read_character();
+                    tok = Token::new(
+                        TokenType::STRIKETHROUGH,
+                        String::from(format!("{}{}", (old as char), (self.character as char))),
                     );
                 } else {
                     tok = Token::new(
@@ -71,6 +96,29 @@ impl Lexer {
                     );
                 }
             }
+            b'>' => {
+                if self.peek_character() == b' ' {
+                    tok = Token::new(TokenType::QUOTEDTEXT, String::from(self.character as char));
+                } else {
+                    tok = Token::new(
+                        TokenType::PARAGRAPH,
+                        String::from(format!("{}", (self.character as char))),
+                    );
+                }
+            }
+            b'`' => {
+                if self.peek_character() == b'`' && self.peek_character_at(2) == b'`' {
+                    self.read_character();
+                    self.read_character();
+                    tok = Token::new(TokenType::QUOTEDCODE, String::from("```"));
+                } else {
+                    tok = Token::new(
+                        TokenType::PARAGRAPH,
+                        String::from(format!("{}", (self.character as char))),
+                    );
+                }
+            }
+            b'\r' => tok = Token::new(TokenType::EOL, String::from("\r")),
             0 => tok = Token::new(TokenType::EOF, String::new()),
             _ => {
                 if !(is_letter(self.character) || is_digit(self.character)) {
@@ -89,6 +137,14 @@ impl Lexer {
             0
         } else {
             self.input.bytes().nth(self.read_position).unwrap()
+        }
+    }
+
+    fn peek_character_at(&self, pos: usize) -> u8 {
+        if pos >= self.input.len() {
+            0
+        } else {
+            self.input.bytes().nth(self.position + pos).unwrap()
         }
     }
 
