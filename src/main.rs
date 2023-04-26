@@ -15,6 +15,10 @@ enum Commands {
     Format {
         path: String,
     },
+    /// Lexing a markdown file 
+    Lexer {
+        path: String,
+    },
     /// Format an inline markdown content to a readable content
     Inline {
         content: String,
@@ -29,24 +33,36 @@ fn main() {
         Some(Commands::Format { path }) => {
             format_file(path);
         },
+        Some(Commands::Lexer { path }) => {
+            lexe_file(path);
+        }
         Some(Commands::Inline { content }) => {
-            repl(content);
+            repl_lexe(content);
         }
         _ => {}
     }
 }
 
+fn lexe_file(file_path: String) {
+    let file = fs::read_to_string(file_path);
+    match file {
+        Ok(content) => {
+            repl_lexe(content);
+        },
+        Err(e) => panic!("{e}")
+    }
+}
 fn format_file(file_path: String) {
     let file = fs::read_to_string(file_path);
     match file {
         Ok(content) => {
-            repl(content);
+            unimplemented!();
         },
         Err(e) => panic!("{e}")
     }
 }
 
-fn repl(content: String) {
+fn repl_lexe(content: String) {
     let mut l: Lexer = Lexer::new(content);
     let mut token: Token = l.next_token();
     while token.token_type != TokenType::EOF && token.token_type != TokenType::ILLEGAL {
